@@ -58,8 +58,7 @@ Start All
 ---
 
 4️⃣ Open in Browser
-
-http://localhost/ca-certificate/index.php
+ http://localhost/ca_certificate/login.php
 
 ---
 
