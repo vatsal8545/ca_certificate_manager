@@ -45,7 +45,7 @@ C:\laragon\www\
 
 Example:
 
-C:\laragon\www\ca-project
+C:\laragon\www\ca-certificate
 
 ---
 
@@ -59,7 +59,7 @@ Start All
 
 4️⃣ Open in Browser
 
-http://localhost/ca-certificate/login.php
+http://localhost/ca-certificate/index.php
 
 ---
 
