@@ -1,1 +1,0 @@
-<h2>Working Capital Certificate Template</h2>
