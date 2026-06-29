@@ -364,7 +364,7 @@
           existingClient.name = existingClient.name || importedClient.name;
           existingClient.status = importedClient.status || existingClient.status || 'Proprietor';
           existingClient.pan = existingClient.pan || importedClient.pan;
-          existingClient.gst = existingClient.gst || importedClient.gst;
+          existingClient.gst = importedClient.gst;
           if (importedClient.years.length) {
             existingClient.years = existingClient.years || [];
             importedClient.years.forEach(yearData => {
