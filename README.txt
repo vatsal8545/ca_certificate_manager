@@ -19,6 +19,7 @@ Password: admin123
 - 🔐 Login system (session-based)
 - ➕ Add client details
 - 📋 View client list
+- 📊 Excel upload
 - 📄 Generate certificate (basic format)
 - 💾 Data stored in memory (no database)
 
