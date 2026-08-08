@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CA Certificate Manager</title>
   <!-- Custom Premium Styles -->
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=<?= time(); ?>">
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 </head>
 <body>
