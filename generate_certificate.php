@@ -45,18 +45,18 @@ function toIndianWords($num) {
         return $words[$num];
     }
     if ($num < 100) {
-        return $words[10 * floor($num / 10)] . ($num % 10 ? ' ' . $words[$num % 10] : '');
+        return $words[10 * (int) floor($num / 10)] . ($num % 10 ? ' ' . $words[$num % 10] : '');
     }
     if ($num < 1000) {
-        return $words[floor($num / 100)] . ' Hundred' . ($num % 100 ? ' and ' . toIndianWords($num % 100) : '');
+        return $words[(int) floor($num / 100)] . ' Hundred' . ($num % 100 ? ' and ' . toIndianWords($num % 100) : '');
     }
     if ($num < 100000) { // Under 1 Lakh
-        return toIndianWords(floor($num / 1000)) . ' Thousand' . ($num % 1000 ? ' ' . toIndianWords($num % 1000) : '');
+        return toIndianWords((int) floor($num / 1000)) . ' Thousand' . ($num % 1000 ? ' ' . toIndianWords($num % 1000) : '');
     }
     if ($num < 10000000) { // Under 1 Crore
-        return toIndianWords(floor($num / 100000)) . ' Lakh' . ($num % 100000 ? ' ' . toIndianWords($num % 100000) : '');
+        return toIndianWords((int) floor($num / 100000)) . ' Lakh' . ($num % 100000 ? ' ' . toIndianWords($num % 100000) : '');
     }
-    return toIndianWords(floor($num / 10000000)) . ' Crore' . ($num % 10000000 ? ' ' . toIndianWords($num % 10000000) : '');
+    return toIndianWords((int) floor($num / 10000000)) . ' Crore' . ($num % 10000000 ? ' ' . toIndianWords($num % 10000000) : '');
 }
 
 function amountInWords($value) {

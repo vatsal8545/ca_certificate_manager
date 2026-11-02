@@ -1,0 +1,12 @@
+{
+    "name": "vatsal8545/ca-certificate-manager",
+    "description": "CA Certificate Generator system built using PHP",
+    "require": {
+        "tecnickcom/tcpdf": "^6.6"
+    },
+    "config": {
+        "platform": {
+            "php": "8.3.28"
+        }
+    }
+}

@@ -1,22 +1,47 @@
 <?php
 session_start();
-$error = '';
+require_once __DIR__ . '/database/db.php';
+
+$error = $dbInitError ?? '';
+$successMessage = '';
+if (isset($_GET['registered']) && $_GET['registered'] === '1') {
+    $successMessage = 'Registration successful. Please log in with your new credentials.';
+}
+
+if (isset($_SESSION['user'])) {
+    header('Location: ' . (($_SESSION['user']['role'] ?? '') === 'Administrator' ? 'admin/index.php' : 'index.php'));
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
-    
-    $adminUser = 'admin';
-    $adminPass = 'admin123';
-    
-    if ($username === $adminUser && $password === $adminPass) {
-        $_SESSION['user'] = [
-            'username' => $username,
-            'role' => 'Administrator',
-        ];
-        header('Location: index.php');
-        exit;
+
+    try {
+        $pdo = getDbConnection();
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE username = ? LIMIT 1');
+        $stmt->execute([$username]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($password, $user['password'])) {
+            $_SESSION['user'] = [
+                'id' => (int)$user['id'],
+                'username' => $user['username'],
+                'role' => $user['role'],
+            ];
+
+            if ($user['role'] === 'Administrator') {
+                header('Location: admin/index.php');
+            } else {
+                header('Location: index.php');
+            }
+            exit;
+        }
+
+        $error = 'Invalid username or password.';
+    } catch (Throwable $e) {
+        $error = 'Database error. Please check MySQL setup.';
     }
-    $error = 'Invalid username or password.';
 }
 ?>
 <!doctype html>
@@ -218,6 +243,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
       <?php endif; ?>
 
+      <?php if (!empty($successMessage)): ?>
+        <div class="error-alert" style="background:#ecfdf5; border-color:#bbf7d0; color:#166534;">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM7.998 4.5a.75.75 0 1 0-1.5 0v3.25a.75.75 0 0 0 .75.75h2.5a.75.75 0 0 0 0-1.5H7.998V4.5zm0 7a.875.875 0 1 0 0-1.75.875.875 0 0 0 0 1.75z"/></svg>
+          <span><?=htmlspecialchars($successMessage)?></span>
+        </div>
+      <?php endif; ?>
+
       <form method="post" autocomplete="off">
         <div class="form-group">
           <label for="username" class="form-label">Username</label>
@@ -225,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <span class="input-icon">
               <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/></svg>
             </span>
-            <input id="username" name="username" class="form-control" required placeholder="admin" value="admin">
+            <input id="username" name="username" class="form-control" required placeholder="Your username" value="">
           </div>
         </div>
 
@@ -235,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <span class="input-icon">
               <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
             </span>
-            <input id="password" name="password" type="password" class="form-control" required placeholder="••••••••" value="admin123">
+            <input id="password" name="password" type="password" class="form-control" required placeholder="••••••••" value="">
           </div>
         </div>
 
@@ -244,6 +276,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           Sign In
         </button>
       </form>
+      <div style="margin-top: 20px; text-align: center; font-size: 0.9rem; color: #475569;">
+        <span>New to CA Certificate Manager?</span>
+        <a href="register.php" style="color: #1d4ed8; text-decoration: none; font-weight: 700;">Create an account</a>
+      </div>
+      <div style="margin-top: 10px; text-align: center; font-size: 0.9rem; color: #475569;">
+        <a href="home.php" style="color: #1d4ed8; text-decoration: none; font-weight: 700;">Back to Home</a>
+      </div>
     </div>
   </div>
 </body>

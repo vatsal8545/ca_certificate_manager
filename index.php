@@ -1,4 +1,4 @@
-<?php require_once 'auth_check.php'; ?>
+<?php require_once 'auth_check.php'; $currentUser = $_SESSION['user'] ?? null; ?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -16,7 +16,7 @@
       <div class="brand-section">
         <div class="brand">
           <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="color: #fbbf24;"><path d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.622-.058-.006a2.89 2.89 0 0 0-3.322 3.322l.006.058-.622.622a2.89 2.89 0 0 0 0 4.134l.622.622-.006.058a2.89 2.89 0 0 0 3.322 3.322l.058-.006.622.622a2.89 2.89 0 0 0 4.134 0l.622-.622.058.006a2.89 2.89 0 0 0 3.322-3.322l-.006-.058.622-.622a2.89 2.89 0 0 0 0-4.134l-.622-.622.006-.058a2.89 2.89 0 0 0-3.322-3.322l-.058.006zm-5.69 2.477a1.89 1.89 0 0 1 2.174-2.174l.08.008.835-.835a1.89 1.89 0 0 1 2.67 0l.836.835.08-.008a1.89 1.89 0 0 1 2.174 2.174l-.008.08.835.836a1.89 1.89 0 0 1 0 2.67l-.835.835.008.08a1.89 1.89 0 0 1-2.174 2.174l-.08-.008-.835.835a1.89 1.89 0 0 1-2.67 0l-.836-.835-.08.008a1.89 1.89 0 0 1-2.174-2.174l.008-.08-.835-.836a1.89 1.89 0 0 1 0-2.67l.835-.835-.008-.08zm1.968 4.398a.5.5 0 0 0-.83.604l1.5 2.062a.5.5 0 0 0 .747.078l2.5-2.5a.5.5 0 0 0-.707-.708L7.75 9.423z"/></svg>
-          CA CERT MANAGER
+          CA CERTIFICATE MANAGER
         </div>
         <p class="brand-subtitle">Simple • Fast • Accurate</p>
       </div>
@@ -33,6 +33,12 @@
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/></svg>
           Profile
         </a>
+        <?php if (isset($currentUser['role']) && $currentUser['role'] === 'Administrator'): ?>
+        <a class="nav-link-custom" href="admin/index.php">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3 1.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5V2h.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H13v1h.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H13v1h.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H13v.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5H3v-1H2.5a.5.5 0 0 1-.5-.5v-1A.5.5 0 0 1 2.5 8H3V7H2.5a.5.5 0 0 1-.5-.5V5A.5.5 0 0 1 2.5 4H3V3h-.5A.5.5 0 0 1 2 2.5v-1A.5.5 0 0 1 2.5 1.5H3z"/></svg>
+          Admin Panel
+        </a>
+        <?php endif; ?>
       </nav>
       <div class="sidebar-footer">
         <div class="avatar" id="sidebarAvatar">A</div>
@@ -351,8 +357,6 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.1/dist/xlsx.full.min.js"></script>
 
   <script>
-    const clientsKey = 'ca_clients';
-    const firmKey = 'ca_firm_settings';
     let editingId = null;
     let firmSettings = null;
     let currentImportList = [];
@@ -530,26 +534,32 @@
       return date.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
     }
 
-    function loadFirmSettings() {
-      const saved = localStorage.getItem(firmKey);
-      const parsed = saved ? JSON.parse(saved) : null;
-      firmSettings = parsed;
-      
-      const statsFirmStatus = document.getElementById('statsFirmStatus');
-      const statsFirmIcon = document.getElementById('statsFirmIcon');
-      if (parsed) {
-        statsFirmStatus.textContent = parsed.firmName;
-        statsFirmStatus.className = "stat-value fs-6 text-truncate";
-        statsFirmIcon.className = "stat-icon stat-icon-success";
-        if (parsed.udin && !udinInput.value) {
-          udinInput.value = parsed.udin;
+    async function loadFirmSettings() {
+      try {
+        const response = await fetch('database/db.php?action=load_firm');
+        const result = await response.json();
+        const parsed = result.success ? result.firm : null;
+        firmSettings = parsed;
+
+        const statsFirmStatus = document.getElementById('statsFirmStatus');
+        const statsFirmIcon = document.getElementById('statsFirmIcon');
+        if (parsed) {
+          const firmNameValue = parsed.firm_name || parsed.firmName || 'Configured';
+          statsFirmStatus.textContent = firmNameValue;
+          statsFirmStatus.className = "stat-value fs-6 text-truncate";
+          statsFirmIcon.className = "stat-icon stat-icon-success";
+          if ((parsed.udin_number || parsed.udin) && !udinInput.value) {
+            udinInput.value = parsed.udin_number || parsed.udin;
+          }
+        } else {
+          statsFirmStatus.textContent = "Not Configured";
+          statsFirmStatus.className = "stat-value";
+          statsFirmIcon.className = "stat-icon stat-icon-warning";
         }
-      } else {
-        statsFirmStatus.textContent = "Not Configured";
-        statsFirmStatus.className = "stat-value";
-        statsFirmIcon.className = "stat-icon stat-icon-warning";
+        return parsed;
+      } catch (error) {
+        return null;
       }
-      return parsed;
     }
 
     function setCurrentDate() {
@@ -558,16 +568,28 @@
       certificateDateInput.value = today.toISOString().slice(0,10);
     }
 
-    function loadClients() {
-      const list = JSON.parse(localStorage.getItem(clientsKey) || '[]');
-      document.getElementById('statsTotalClients').textContent = list.length;
-      return list;
+    async function loadClients() {
+      try {
+        const response = await fetch('database/db.php?action=list_clients');
+        const result = await response.json();
+        const list = result.success ? (result.clients || []) : [];
+        const normalized = list.map(client => ({
+          ...client,
+          pan: client.pan || client.pan_number || '',
+          gst: client.gst || client.gst_number || '',
+          status: client.status || 'Proprietor',
+          years: Array.isArray(client.years) ? client.years : []
+        }));
+        document.getElementById('statsTotalClients').textContent = normalized.length;
+        return normalized;
+      } catch (error) {
+        document.getElementById('statsTotalClients').textContent = '0';
+        return [];
+      }
     }
 
-    function saveClients(clients) {
-      localStorage.setItem(clientsKey, JSON.stringify(clients));
-      loadClients();
-      renderClientsTable();
+    async function saveClients(clients) {
+      return clients;
     }
 
     function showImportStatus(message, isError = false) {
@@ -682,7 +704,7 @@
       }
     }
 
-    function renderImportPreview() {
+    async function renderImportPreview() {
       if (!currentImportList.length) {
         previewTableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4">No clients parsed successfully.</td></tr>';
         confirmImportBtn.disabled = true;
@@ -690,7 +712,7 @@
         return;
       }
 
-      const existingClients = loadClients();
+      const existingClients = await loadClients();
       confirmImportBtn.disabled = false;
 
       previewTableBody.innerHTML = currentImportList.map((client, index) => {
@@ -750,43 +772,46 @@
       }
     });
 
-    confirmImportBtn.addEventListener('click', function() {
+    confirmImportBtn.addEventListener('click', async function() {
       const checkboxes = previewTableBody.querySelectorAll('.preview-select-checkbox:checked');
       if (!checkboxes.length) return;
 
-      const clients = loadClients();
       let importedCount = 0;
 
-      checkboxes.forEach(cb => {
-        const index = cb.getAttribute('data-index');
-        const importedClient = currentImportList[index];
-
-        const existingIndex = clients.findIndex(c => c.pan && importedClient.pan && c.pan.toLowerCase() === importedClient.pan.toLowerCase());
-
-        if (existingIndex >= 0) {
-          const ec = clients[existingIndex];
-          ec.name = importedClient.name;
-          ec.status = importedClient.status;
-          ec.gst = importedClient.gst || ec.gst;
-          
-          importedClient.years.forEach(iy => {
-            const hasYear = ec.years.some(ey => ey.year === iy.year);
-            if (!hasYear) {
-              ec.years.push(iy);
-            } else {
-              const yIdx = ec.years.findIndex(ey => ey.year === iy.year);
-              ec.years[yIdx].amount = iy.amount;
+      try {
+        for (const cb of checkboxes) {
+          const index = cb.getAttribute('data-index');
+          const importedClient = currentImportList[index];
+          const payload = {
+            client: {
+              id: importedClient.id || null,
+              name: importedClient.name,
+              status: importedClient.status,
+              pan: importedClient.pan,
+              gst: importedClient.gst,
+              years: importedClient.years || []
             }
-          });
-        } else {
-          clients.unshift(importedClient);
-        }
-        importedCount++;
-      });
+          };
 
-      saveClients(clients);
-      previewModalEl.classList.remove('show');
-      showImportStatus(`Imported and updated ${importedCount} client record(s) successfully!`);
+          const response = await fetch('database/db.php?action=save_client', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const result = await response.json();
+          if (!result.success) {
+            throw new Error(result.error || 'Client import failed');
+          }
+          importedCount++;
+        }
+
+        await loadClients();
+        renderClientsTable(await loadClients());
+        previewModalEl.classList.remove('show');
+        showImportStatus(`Imported and updated ${importedCount} client record(s) successfully!`);
+      } catch (error) {
+        alert(error.message || 'Import failed.');
+      }
     });
 
     // Close preview modal functions
@@ -942,30 +967,38 @@
       };
     }
 
-    function saveCurrentClient() {
+    async function saveCurrentClient() {
       if (!validateClientForm()) {
         return;
       }
-      const clients = loadClients();
+
       const client = getClientDataFromForm();
-      const existingIndex = clients.findIndex(item => item.id === client.id);
-      if (existingIndex >= 0) {
-        clients[existingIndex] = client;
-      } else {
-        clients.unshift(client);
+      try {
+        const response = await fetch('database/db.php?action=save_client', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client })
+        });
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.error || 'Could not save client');
+        }
+        const refreshed = await loadClients();
+        renderClientsTable(refreshed);
+        resetClientForm();
+      } catch (error) {
+        alert(error.message || 'Failed to save client.');
       }
-      saveClients(clients);
-      resetClientForm();
     }
 
-    function renderClientsTable() {
-      const clients = loadClients();
-      if (!clients.length) {
+    async function renderClientsTable(clients = []) {
+      const list = clients.length ? clients : await loadClients();
+      if (!list.length) {
         clientsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><p class="mt-2 mb-0">No clients registered yet.</p></td></tr>';
         return;
       }
-      clientsTableBody.innerHTML = clients.map(client => {
-        const yearsWithAmounts = client.years.map(item => `${item.year} (₹${Number(item.amount).toLocaleString('en-IN')})`).join(', ');
+      clientsTableBody.innerHTML = list.map(client => {
+        const yearsWithAmounts = (client.years || []).map(item => `${item.year} (₹${Number(item.amount).toLocaleString('en-IN')})`).join(', ');
         
         let statusBadgeClass = 'badge-custom';
         const st = client.status.toLowerCase();
@@ -998,9 +1031,9 @@
       }).join('');
     }
 
-    function editClient(id) {
-      const clients = loadClients();
-      const client = clients.find(item => item.id === id);
+    async function editClient(id) {
+      const clients = await loadClients();
+      const client = clients.find(item => String(item.id) === String(id));
       if (!client) return;
       editingId = client.id;
       clientNameInput.value = client.name;
@@ -1030,10 +1063,23 @@
       editClient(id);
     }
 
-    function deleteClient(id) {
+    async function deleteClient(id) {
       if (confirm('Are you sure you want to delete this client record?')) {
-        const clients = loadClients().filter(item => item.id !== id);
-        saveClients(clients);
+        try {
+          const response = await fetch('database/db.php?action=delete_client', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + encodeURIComponent(id)
+          });
+          const result = await response.json();
+          if (!result.success) {
+            throw new Error(result.error || 'Delete failed');
+          }
+          const refreshed = await loadClients();
+          renderClientsTable(refreshed);
+        } catch (error) {
+          alert(error.message || 'Could not delete client.');
+        }
       }
     }
 
@@ -1228,7 +1274,7 @@
       }
     }
 
-    function previewCertificate() {
+    async function previewCertificate() {
       if (!validateClientForm() || !validatePreviewForm()) {
         return;
       }
@@ -1238,7 +1284,7 @@
       const place = placeInput.value.trim() || 'Ahmedabad';
       const udin = udinInput.value.trim();
       const yearsRows = getYearRows();
-      const firm = firmSettings || loadFirmSettings();
+      const firm = firmSettings || await loadFirmSettings();
 
       const html = `
         <html>
@@ -1279,7 +1325,7 @@
       }, 500);
     }
 
-    function downloadBackendPdf() {
+    async function downloadBackendPdf() {
       if (!validateClientForm() || !validatePreviewForm()) {
         return;
       }
@@ -1289,7 +1335,7 @@
       const dateValue = certificateDateInput.value || new Date().toISOString().slice(0,10);
       const place = placeInput.value.trim() || 'Ahmedabad';
       const udin = udinInput.value.trim();
-      const firm = firmSettings || loadFirmSettings();
+      const firm = firmSettings || await loadFirmSettings();
       const style = templateStyleInput.value;
 
       document.getElementById('pdfClientData').value = JSON.stringify(client);
@@ -1314,10 +1360,14 @@
     previewPrintBtn.addEventListener('click', previewCertificate);
     generatePdfBtn.addEventListener('click', downloadBackendPdf);
 
-    setCurrentDate();
-    loadFirmSettings();
-    resetClientForm();
-    renderClientsTable();
+    async function initializeDashboard() {
+      setCurrentDate();
+      await loadFirmSettings();
+      resetClientForm();
+      await renderClientsTable(await loadClients());
+    }
+
+    initializeDashboard();
   </script>
 </body>
 </html>

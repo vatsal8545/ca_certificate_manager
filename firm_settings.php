@@ -1,4 +1,4 @@
-<?php require_once 'auth_check.php'; ?>
+<?php require_once 'auth_check.php'; $currentUser = $_SESSION['user'] ?? null; ?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -33,6 +33,12 @@
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/></svg>
           Profile
         </a>
+        <?php if (isset($currentUser['role']) && $currentUser['role'] === 'Administrator'): ?>
+        <a class="nav-link-custom" href="admin/index.php">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3 1.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5V2h.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H13v1h.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H13v1h.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H13v.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5H3v-1H2.5a.5.5 0 0 1-.5-.5v-1A.5.5 0 0 1 2.5 8H3V7H2.5a.5.5 0 0 1-.5-.5V5A.5.5 0 0 1 2.5 4H3V3h-.5A.5.5 0 0 1 2 2.5v-1A.5.5 0 0 1 2.5 1.5H3z"/></svg>
+          Admin Panel
+        </a>
+        <?php endif; ?>
       </nav>
       <div class="sidebar-footer">
         <div class="avatar" id="sidebarAvatar">A</div>
@@ -204,19 +210,25 @@
       pageDate.textContent = 'Date: ' + formatDateDisplay(today.toISOString().slice(0,10));
     }
 
-    function loadFirm() {
-      const saved = localStorage.getItem(firmKey);
-      const firm = saved ? JSON.parse(saved) : null;
-      if (firm) {
-        firmName.value = firm.firmName || '';
-        frn.value = firm.frn || '';
-        signatoryName.value = firm.signatoryName || '';
-        signatoryStatus.value = firm.signatoryStatus || 'Proprietor';
-        membershipNumber.value = firm.membershipNumber || '';
-        udin.value = firm.udin || '';
-        renderFirm(firm);
-      } else {
-        firmDetails.innerHTML = '<div style="text-align:center; padding:40px; color:#64748b;"><p>No CA firm details stored yet.</p></div>';
+    async function loadFirm() {
+      try {
+        const response = await fetch('database/db.php?action=load_firm');
+        const data = await response.json();
+        const firm = data.success ? data.firm : null;
+
+        if (firm) {
+          firmName.value = firm.firm_name || firm.firmName || '';
+          frn.value = firm.frn || '';
+          signatoryName.value = firm.signatory_name || firm.signatoryName || '';
+          signatoryStatus.value = firm.signatory_status || firm.signatoryStatus || 'Proprietor';
+          membershipNumber.value = firm.membership_number || firm.membershipNumber || '';
+          udin.value = firm.udin_number || firm.udin || '';
+          renderFirm(firm);
+        } else {
+          firmDetails.innerHTML = '<div style="text-align:center; padding:40px; color:#64748b;"><p>No CA firm details stored yet.</p></div>';
+        }
+      } catch (error) {
+        firmDetails.innerHTML = '<div style="text-align:center; padding:40px; color:#64748b;"><p>Unable to load firm details.</p></div>';
       }
     }
 
@@ -225,17 +237,17 @@
         <div class="table-responsive-custom">
           <table class="table-custom">
             <tbody>
-              <tr><th style="width: 40%; background:transparent; border-bottom:1px solid #f1f5f9; padding:12px;">Firm Name</th><td style="border-bottom:1px solid #f1f5f9; padding:12px; font-weight:700;">${firm.firmName}</td></tr>
+              <tr><th style="width: 40%; background:transparent; border-bottom:1px solid #f1f5f9; padding:12px;">Firm Name</th><td style="border-bottom:1px solid #f1f5f9; padding:12px; font-weight:700;">${firm.firm_name || firm.firmName || '-'}</td></tr>
               <tr><th style="background:transparent; border-bottom:1px solid #f1f5f9; padding:12px;">FRN</th><td style="border-bottom:1px solid #f1f5f9; padding:12px;">${firm.frn || '-'}</td></tr>
-              <tr><th style="background:transparent; border-bottom:1px solid #f1f5f9; padding:12px;">Signatory</th><td style="border-bottom:1px solid #f1f5f9; padding:12px;">${firm.signatoryName} (${firm.signatoryStatus})</td></tr>
-              <tr><th style="background:transparent; border-bottom:1px solid #f1f5f9; padding:12px;">Membership No</th><td style="border-bottom:1px solid #f1f5f9; padding:12px;">${firm.membershipNumber || '-'}</td></tr>
-              <tr><th style="background:transparent; border-bottom:none; padding:12px;">Default UDIN</th><td style="border-bottom:none; padding:12px; font-family:monospace;">${firm.udin || '-'}</td></tr>
+              <tr><th style="background:transparent; border-bottom:1px solid #f1f5f9; padding:12px;">Signatory</th><td style="border-bottom:1px solid #f1f5f9; padding:12px;">${firm.signatory_name || firm.signatoryName || '-'} (${firm.signatory_status || firm.signatoryStatus || 'Proprietor'})</td></tr>
+              <tr><th style="background:transparent; border-bottom:1px solid #f1f5f9; padding:12px;">Membership No</th><td style="border-bottom:1px solid #f1f5f9; padding:12px;">${firm.membership_number || firm.membershipNumber || '-'}</td></tr>
+              <tr><th style="background:transparent; border-bottom:none; padding:12px;">Default UDIN</th><td style="border-bottom:none; padding:12px; font-family:monospace;">${firm.udin_number || firm.udin || '-'}</td></tr>
             </tbody>
           </table>
         </div>`;
     }
 
-    document.getElementById('saveFirmBtn').addEventListener('click', () => {
+    document.getElementById('saveFirmBtn').addEventListener('click', async () => {
       if (!validateFirmForm()) {
         return;
       }
@@ -247,14 +259,26 @@
         membershipNumber: membershipNumber.value.trim(),
         udin: udin.value.trim()
       };
-      localStorage.setItem(firmKey, JSON.stringify(firm));
-      renderFirm(firm);
-      alert('Firm settings saved successfully.');
+
+      try {
+        const response = await fetch('database/db.php?action=save_firm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(firm)
+        });
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.error || 'Save failed');
+        }
+        renderFirm(result.firm);
+        alert('Firm settings saved successfully.');
+      } catch (error) {
+        alert(error.message || 'Failed to save firm settings.');
+      }
     });
 
     document.getElementById('clearFirmBtn').addEventListener('click', () => {
       clearAllValidation();
-      localStorage.removeItem(firmKey);
       firmName.value = '';
       frn.value = '';
       signatoryName.value = '';

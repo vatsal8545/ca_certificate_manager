@@ -1,85 +1,65 @@
-# ca_certificate_manager
-ca_certificate_manager using PHP
+# CA Certificate Manager
 
-📄 CA Certificate Manager (PHP - Laragon)
+A PHP/MySQL CA certificate management system with multi-tenant CA users and a separate administrator panel.
 
-📌 Project Overview
+## New Features
 
-This project is a simple CA Certificate Generator system built using PHP (Laragon).
-It allows users to manage client data and generate certificates without using a database.
+- Multi-tenant CA support: each CA user sees only their own clients, firm settings, and certificates.
+- Administrator role: separate admin panel for managing CA accounts, site settings, and dashboard stats.
+- Secure authentication: session-based login and PHP `password_hash` encryption.
+- Login and registration pages now use the landing page flow.
+- Database-backed persistence in MySQL through `database/db.php`.
+- Certificate generation and PDF export based on CA client data.
 
----
+## Default admin login
 
-🔐 Login Credentials
+- Username: `admin`
+- Password: `admin123`
 
-Username: admin  
-Password: admin123
+## Key Pages
 
----
+- `home.php` — Landing page with links to login/register
+- `login.php` — Sign in page
+- `register.php` — CA registration page
+- `index.php` — CA dashboard and certificate generator
+- `firm_settings.php` — CA user firm settings
+- `profile.php` — View and manage current user profile
+- `admin/index.php` — Administrator dashboard
+- `admin/users.php` — Manage CA user accounts
+- `admin/settings.php` — Update site settings
 
-🚀 Features
+## Setup
 
-- 🔐 Login system (session-based)
-- ➕ Add client details
-- 📋 View client list
-- ➕ Import Excel File 
-- 📄 Generate certificate (basic format)
-- 💾 Data stored in memory (no database)
+1. Place the project in your Laragon `www` folder, for example:
+   - `C:\laragon\www\ca_certificate`
+2. Start Laragon and the MySQL server.
+3. Open the app in your browser:
+   - `http://localhost/ca_certificate/home.php`
+4. Use the default admin credentials to log in, or register a new CA user.
 
----
+## Database
 
- 
+- The database is automatically created as `ca_certificate_manager`.
+- All user, client, firm, and certificate data is stored in MySQL.
+- The app uses `database/db.php` to initialize tables and manage data.
 
-⚙️ How to Run Project Locally
+## Notes
 
-1️⃣ Install Laragon
+- CA registration blocks reserved credentials like `admin` / `admin123`.
+- Admin accounts are managed separately and cannot be created through the CA registration form.
+- The landing page now directs users to login/register from `home.php`.
 
-Download and install Laragon.
+## How to Use
 
----
+1. Open `http://localhost/ca_certificate/home.php`
+2. Click `Login` to sign in, or `Register` to create a new CA account.
+3. CA users can add clients, configure firm settings, and generate certificates.
+4. Administrators can manage CA users and update site configuration.
 
-2️⃣ Move Project Folder
+## Future improvements
 
-Place your project inside:
-
-C:\laragon\www\
-
-Example:
-
-C:\laragon\www\ca-certificate
-
----
-
-3️⃣ Start Laragon
-
-Click:
-
-Start All
-
----
-
-4️⃣ Open in Browser
- http://localhost/ca_certificate/login.php
-
----
-
-🧠 Tech Stack
-
-- PHP
-- HTML
-- Laragon
-- Session (In-memory storage)
-
----
-
-📌 Future Improvements
-
-- 📄 Proper PDF format (FPDF/TCPDF)
-- 🎨 Better UI (Bootstrap)
-- 📊 Excel upload
-- 📑 Multiple certificate types
-
----
-
- 
+- Add password reset flow.
+- Add certificate history and audit logs.
+- Enhance PDF certificate designs.
+- Add email notifications and download tracking.
   
